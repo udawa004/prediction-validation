@@ -205,10 +205,12 @@ public class DriverClass {
 		int predTime = predicted.get(predIndex).time;
 		if(predicted.get(predIndex).time == time)
 			return predIndex;
+		if(predicted.get(predIndex).time < time){
 		while(predIndex<predicted.size()-1 && predicted.get(predIndex).time!=time){
 			predIndex++;
 			if(predicted.get(predIndex).time>time)
 				break;
+		}
 		}
 		return predIndex;
 	}
