@@ -1,1 +1,1 @@
-This is the directory where your source code would reside.
+This directory contains the source code!

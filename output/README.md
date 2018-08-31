@@ -1,1 +1,1 @@
-This directory is where we would expect your program to write the requested output files.
+The comparison.txt output file is written in this directory.

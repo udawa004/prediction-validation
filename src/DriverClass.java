@@ -5,9 +5,9 @@ import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.text.DecimalFormat;
 import java.util.ArrayList;
 import java.util.List;
-
 
 public class DriverClass {
 
@@ -29,7 +29,6 @@ public class DriverClass {
 	
 	public static void main(String[] args) {
 		try {
-			//Initialize input variables
 			initializeInputVariables(args);
 			readInputFile(actualFile, actual);
 			readInputFile(predictedFile, predicted);
@@ -37,7 +36,6 @@ public class DriverClass {
 			generateSumList();
 			generateComparisonTable();
 			generateOutputFile();
-			//generateSummaryTable();
 			
 		} catch (Exception e) {
 			e.printStackTrace();
@@ -45,6 +43,8 @@ public class DriverClass {
 	
 	}
 	public static void generateOutputFile() throws IOException{
+		DecimalFormat df = new DecimalFormat();
+		df.setMinimumFractionDigits(2);
 		File outFile = new File(outputFile);
 		if (!outFile.exists()) {
 			outFile.createNewFile();
@@ -59,7 +59,7 @@ public class DriverClass {
 				if(comparisonTable[i][2] == -1)
 					bw.write("NA"+"\n");
 				else
-					bw.write(comparisonTable[i][2]+"\n");
+					bw.write(df.format(comparisonTable[i][2])+"\n");
 			}
 		} catch (IOException E) {
 			E.printStackTrace();
@@ -117,9 +117,9 @@ public class DriverClass {
 
 
 	private static void initializeInputVariables(String[] args) {
-		actualFile = args[0];
-		predictedFile = args[1];
-		windowFile = args[2];
+		windowFile = args[0];
+		actualFile = args[1];
+		predictedFile = args[2];
 		outputFile = args[3];
 		
 	}
@@ -264,8 +264,10 @@ public class DriverClass {
 		if(predicted.get(predIndex).time == time)
 			return predIndex;
 	
-		while(predIndex<predicted.size() && predicted.get(predIndex).time!=time){
+		while(predIndex<predicted.size()-1 && predicted.get(predIndex).time!=time){
 			predIndex++;
+			if(predicted.get(predIndex).time>time)
+				break;
 		}
 		
 		return predIndex;
