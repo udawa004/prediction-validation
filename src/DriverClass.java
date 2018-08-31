@@ -20,7 +20,6 @@ public class DriverClass {
 	static List<RecordFormat> predicted = new ArrayList<RecordFormat>();
 	static int windowSize;
 	
-	static double[][] summaryTable;
 	static List<ArrayList<Double>> sumList = new ArrayList<ArrayList<Double>>();
 	static List<Integer> time = new ArrayList<Integer>();
 	static int predIndex = 0;
@@ -40,88 +39,13 @@ public class DriverClass {
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
+	}
 	
-	}
-	public static void generateOutputFile() throws IOException{
-		DecimalFormat df = new DecimalFormat();
-		df.setMinimumFractionDigits(2);
-		File outFile = new File(outputFile);
-		if (!outFile.exists()) {
-			outFile.createNewFile();
-		}
-		FileWriter fw = new FileWriter(outFile.getAbsoluteFile()); 
-		BufferedWriter bw = new BufferedWriter(fw);
-		
-		try {
-			for(int i = 0 ; i<comparisonTable.length ; i++){
-				bw.write(new Double(comparisonTable[i][0]).intValue()
-						+"|"+new Double(comparisonTable[i][1]).intValue()+"|");
-				if(comparisonTable[i][2] == -1)
-					bw.write("NA"+"\n");
-				else
-					bw.write(df.format(comparisonTable[i][2])+"\n");
-			}
-		} catch (IOException E) {
-			E.printStackTrace();
-		}
-		
-		
-		bw.close();
-		fw.close();
-	}
-
-
-	private static double findAverageError(int start, int end) {
-		int i = compIndex;
-		double sum = 0;
-		double n = 0;
-		double avgError;
-		ArrayList<Double> record;
-		
-		for(int j = start; j<= end;j++){
-			record = sumList.get(i);	
-			if(record.get(0)==j){
-				sum+=record.get(1);
-				n+=record.get(2);
-				i++;
-			}
-		}
-		
-		if(sumList.get(compIndex).get(0) == start)
-			compIndex++;
-		avgError = n!=0?sum/n:-1;
-		return (double) Math.round(avgError * 100) / 100;
-	}
-
-
-	private static void generateComparisonTable() {
-		
-		int startHour = actual.get(0).time;
-		int lastHour = actual.get(actual.size()-1).time;
-		
-		int lastWindowStart = lastHour - (windowSize-1);
-		comparisonTable = new double[lastWindowStart-startHour+1][3];
-		int start = startHour;
-		int end=start+windowSize-1;
-		int row = 0;
-		while(start<=lastWindowStart){
-			comparisonTable[row][0] = start;
-			comparisonTable[row][1] = end;
-			comparisonTable[row][2] = findAverageError(start,end);
-
-			start++;end++;
-			row++;
-		}
-		
-	}
-
-
 	private static void initializeInputVariables(String[] args) {
 		windowFile = args[0];
 		actualFile = args[1];
 		predictedFile = args[2];
 		outputFile = args[3];
-		
 	}
 	
 	private static void readInputFile(String inFileName, List<RecordFormat> outList) throws IOException{
@@ -129,7 +53,6 @@ public class DriverClass {
 		FileReader fr = new FileReader(inFile);
 		BufferedReader br=new BufferedReader(fr);
 		String line = new String();
-		//declare DS
 		while ((line = br.readLine()) != null ){
 			String[] lineSplit = line.split("\\|");
 			int time = lineSplit[0]!=null?Integer.parseInt(lineSplit[0]):0;
@@ -152,16 +75,13 @@ public class DriverClass {
 		windowSize = Integer.parseInt(line);
 		br.close();
 		fr.close();
-		
 	}
 	
-		
 	private static void generateSumList(){
 		RecordFormat record;
 		int actualListIndex = 0;
 		double diff;
 		double predPrice;
-		
 		int prevTime = 0;
 		double sum = 0;
 		double n = 0;
@@ -171,22 +91,17 @@ public class DriverClass {
 			record = actual.get(actualListIndex);
 			predPrice = findPredictedPrice(record.time, record.stock);
 			actualListIndex++;
-			
 			if(predPrice == -1) 
 				continue;
-			
 			else{
 				diff = record.price>predPrice?record.price-predPrice:predPrice-record.price;
 				diff = (double) Math.round(diff * 100) / 100;
-				
 				if(record.time!=prevTime){
-					
 					if(prevTime!=0){
 					list = new ArrayList<Double>();
 					list.add((double) prevTime);
 					list.add((double) Math.round(sum * 100) / 100);
 					list.add(n);
-					
 					sumList.add(list);
 					}
 					prevTime = record.time;
@@ -199,50 +114,78 @@ public class DriverClass {
 				}
 			}
 		}
-		
 		if(prevTime!=0){
 			list = new ArrayList<Double>();
 			list.add((double) prevTime);
 			list.add((double) Math.round(sum * 100) / 100);
 			list.add(n);
-			
 			sumList.add(list);
 			}	
-
 	}
-	
-	private static void generateSummaryTable() {
-		summaryTable = new double[predicted.size()][4];
-		RecordFormat record;
-		int actualListIndex = 0;
-		int tableIndex = 0;
-		double diff;
-		double predPrice;
-		
-		while(actualListIndex<actual.size()){
-			record = actual.get(actualListIndex);
-			
-			//find the corresponding stock in predicted table
-			//a function that returns the predicted price of the stock if stock is found, else returns -1;
-			predPrice = findPredictedPrice(record.time, record.stock);
-			actualListIndex++;
-			//if found then fill the entry in summary table
-			if(predPrice == -1) 
-				continue;
-			else{
-				summaryTable[tableIndex][0] = record.time;
-				summaryTable[tableIndex][1] = record.price;
-				summaryTable[tableIndex][2] = predPrice;
-				diff = record.price>predPrice?record.price-predPrice:predPrice-record.price;
-				summaryTable[tableIndex][3] = (double) Math.round(diff * 100) / 100;
-				tableIndex++;
-			}
+
+	private static void generateComparisonTable() {
+		int startHour = actual.get(0).time;
+		int lastHour = actual.get(actual.size()-1).time;
+		int lastWindowStart = lastHour - (windowSize-1);
+		comparisonTable = new double[lastWindowStart-startHour+1][3];
+		int start = startHour;
+		int end=start+windowSize-1;
+		int row = 0;
+		while(start<=lastWindowStart){
+			comparisonTable[row][0] = start;
+			comparisonTable[row][1] = end;
+			comparisonTable[row][2] = findAverageError(start,end);
+			start++;end++;
+			row++;
 		}
 	}
+	
+	public static void generateOutputFile() throws IOException{
+		DecimalFormat df = new DecimalFormat();
+		df.setMinimumFractionDigits(2);
+		File outFile = new File(outputFile);
+		if (!outFile.exists()) {
+			outFile.createNewFile();
+		}
+		FileWriter fw = new FileWriter(outFile.getAbsoluteFile()); 
+		BufferedWriter bw = new BufferedWriter(fw);
+		try {
+			for(int i = 0 ; i<comparisonTable.length ; i++){
+				bw.write(new Double(comparisonTable[i][0]).intValue()
+						+"|"+new Double(comparisonTable[i][1]).intValue()+"|");
+				if(comparisonTable[i][2] == -1)
+					bw.write("NA"+"\n");
+				else
+					bw.write(df.format(comparisonTable[i][2])+"\n");
+			}
+		} catch (IOException E) {
+			E.printStackTrace();
+		}
+		bw.close();
+		fw.close();
+	}
 
+	private static double findAverageError(int start, int end) {
+		int i = compIndex;
+		double sum = 0;
+		double n = 0;
+		double avgError;
+		ArrayList<Double> record;
+		for(int j = start; j<= end;j++){
+			record = sumList.get(i);	
+			if(record.get(0)==j){
+				sum+=record.get(1);
+				n+=record.get(2);
+				i++;
+			}
+		}
+		if(sumList.get(compIndex).get(0) == start)
+			compIndex++;
+		avgError = n!=0?sum/n:-1;
+		return (double) Math.round(avgError * 100) / 100;
+	}
 
 	private static double findPredictedPrice(int time, String actualStock) {
-		
 		//get pred index will return the starting index from the predicted list corresponding to the time entered 
 		int i = getPredIndex(time);
 		RecordFormat predRecord = predicted.get(i);
@@ -254,7 +197,6 @@ public class DriverClass {
 				predRecord = predicted.get(i);
 			else break;
 		}
-			
 		return -1;
 	}
 
@@ -263,17 +205,13 @@ public class DriverClass {
 		int predTime = predicted.get(predIndex).time;
 		if(predicted.get(predIndex).time == time)
 			return predIndex;
-	
 		while(predIndex<predicted.size()-1 && predicted.get(predIndex).time!=time){
 			predIndex++;
 			if(predicted.get(predIndex).time>time)
 				break;
 		}
-		
 		return predIndex;
 	}
-	
-
 }
 class RecordFormat {
 	int time;
@@ -285,6 +223,4 @@ class RecordFormat {
 		this.stock = stock;
 		this.price = price;
 	}
-	
-	
 }
